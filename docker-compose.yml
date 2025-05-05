@@ -20,7 +20,7 @@ services:
 
   celery:
     build: .
-    command: celery -A data_processor worker --loglevel=info
+    command: celery -A app.services.processor worker --loglevel=info
     volumes:
       - ./data:/app/data
     depends_on:

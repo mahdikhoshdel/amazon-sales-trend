@@ -1,10 +1,11 @@
 import os
 import pandas as pd
 from celery import Celery
+from app.config import DATA_FILE_PATH, CELERY_BROKER_URL, CELERY_BACKEND_URL
 
 app = Celery('tasks',
-             broker='redis://redis:6379/0',
-             backend='redis://redis:6379/0',
+             broker=CELERY_BROKER_URL,
+             backend=CELERY_BACKEND_URL,
              broker_connection_retry_on_startup=True)
 
 @app.task
@@ -17,14 +18,13 @@ def compute_sales_trend(file_path, original_product_name):
     return sales_trend.to_dict()
 
 class DataProcessor:
-    def __init__(self, file_path):
-        self.file_path = file_path
+    def __init__(self):
         self.df = self.load_data()
 
     def load_data(self):
-        if not os.path.exists(self.file_path):
-            raise FileNotFoundError(f"File {self.file_path} not found")
-        df = pd.read_csv(self.file_path, low_memory=False)
+        if not os.path.exists(DATA_FILE_PATH):
+            raise FileNotFoundError(f"File {DATA_FILE_PATH} not found")
+        df = pd.read_csv(DATA_FILE_PATH, low_memory=False)
         df['name'] = df['name'].fillna('').astype(str)
         df['original_name'] = df['name']
         df['name'] = df['name'].apply(self.abridge_product_name)
@@ -32,9 +32,10 @@ class DataProcessor:
 
     def abridge_product_name(self, name):
         name = str(name)
-        delimiter = "("
-        if delimiter in name:
-            name = name.split(delimiter)[0].strip()
+        for delimiter in [' (', '2023', 'Model']:
+            if delimiter in name:
+                name = name.split(delimiter)[0].strip()
+                break
         max_length = 50
         return name[:max_length]
 
@@ -49,5 +50,5 @@ class DataProcessor:
 
     def get_sales_trend(self, abridged_product_name):
         original_name = self.get_original_name(abridged_product_name)
-        result = compute_sales_trend.delay(self.file_path, original_name)
+        result = compute_sales_trend.delay(DATA_FILE_PATH, original_name)
         return result

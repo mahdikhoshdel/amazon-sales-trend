@@ -1,0 +1,3 @@
+DATA_FILE_PATH = '/app/data/Amazon-Products - online.csv'
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_BACKEND_URL = 'redis://redis:6379/0'
