@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8050:8050"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - redis
+      - celery
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    command: celery -A data_processor worker --loglevel=info
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - redis
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP=true
