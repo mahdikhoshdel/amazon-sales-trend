@@ -8,9 +8,9 @@ app = Celery('tasks',
              broker_connection_retry_on_startup=True)
 
 @app.task
-def compute_sales_trend(file_path, product_name):
+def compute_sales_trend(file_path, original_product_name):
     df = pd.read_csv(file_path, low_memory=False)
-    product_data = df[df['name'] == product_name][['date', 'discount_price']].copy()
+    product_data = df[df['name'] == original_product_name][['date', 'discount_price']].copy()
     product_data['sales'] = product_data['discount_price'].str.replace('₹', '').str.replace(',', '').astype(float)
     product_data['date'] = pd.to_datetime(product_data['date'])
     sales_trend = product_data.groupby('date').agg({'sales': 'sum'}).reset_index()
@@ -24,11 +24,30 @@ class DataProcessor:
     def load_data(self):
         if not os.path.exists(self.file_path):
             raise FileNotFoundError(f"File {self.file_path} not found")
-        return pd.read_csv(self.file_path, low_memory=False)
+        df = pd.read_csv(self.file_path, low_memory=False)
+        df['name'] = df['name'].fillna('').astype(str)
+        df['original_name'] = df['name']
+        df['name'] = df['name'].apply(self.abridge_product_name)
+        return df
+
+    def abridge_product_name(self, name):
+        name = str(name)
+        delimiter = "("
+        if delimiter in name:
+            name = name.split(delimiter)[0].strip()
+        max_length = 50
+        return name[:max_length]
 
     def get_products(self):
         return self.df['name'].unique().tolist()
 
-    def get_sales_trend(self, product_name):
-        result = compute_sales_trend.delay(self.file_path, product_name)
+    def get_original_name(self, abridged_name):
+        matching_row = self.df[self.df['name'] == abridged_name]
+        if not matching_row.empty:
+            return matching_row['original_name'].iloc[0]
+        return abridged_name
+
+    def get_sales_trend(self, abridged_product_name):
+        original_name = self.get_original_name(abridged_product_name)
+        result = compute_sales_trend.delay(self.file_path, original_name)
         return result

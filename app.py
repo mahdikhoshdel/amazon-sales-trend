@@ -22,15 +22,18 @@ app.layout = html.Div([
         value=data_processor.get_products()[0] if data_processor.get_products() else None,
         style={'width': '50%', 'margin': '0 auto', 'padding': '10px'}
     ),
+    html.Div(id='full-product-name',
+             style={'margin': '20px', 'text-align': 'center', 'font-style': 'italic', 'color': '#555'}),
     dcc.Graph(id='sales-trend-graph', style={'margin-top': '20px'})
 ], style={'padding': '20px', 'background-color': '#f9f9f9'})
 
 
 @app.callback(
-    Output('sales-trend-graph', 'figure'),
+    [Output('sales-trend-graph', 'figure'),
+     Output('full-product-name', 'children')],
     [Input('product-dropdown', 'value')]
 )
-def update_graph(selected_product):
+def update_graph_and_name(selected_product):
     if not selected_product:
         return {
             'layout': {
@@ -38,9 +41,12 @@ def update_graph(selected_product):
                 'xaxis': {'visible': False},
                 'yaxis': {'visible': False}
             }
-        }
+        }, "Please select a product."
 
     try:
+        full_name = data_processor.get_original_name(selected_product)
+        unabridged = full_name.split("(")[1] if '(' in full_name else full_name
+
         if cache_manager.is_cached(selected_product):
             df = cache_manager.get_cached_data(selected_product)
         else:
@@ -59,14 +65,15 @@ def update_graph(selected_product):
                     'xaxis': {'visible': False},
                     'yaxis': {'visible': False}
                 }
-            }
+            }, unabridged
         elif len(df) == 1:
             fig = px.scatter(df, x='date', y='sales', title=f'Sales for {selected_product} (Single Data Point)')
             fig.update_layout(xaxis_title="Date", yaxis_title="Sales (INR)", template="plotly_white")
         else:
             fig = px.line(df, x='date', y='sales', title=f'Sales Trend for {selected_product}', markers=True)
             fig.update_layout(xaxis_title="Date", yaxis_title="Sales (INR)", template="plotly_white")
-        return fig
+
+        return fig, unabridged
 
     except Exception as e:
         logging.error(f"Error processing {selected_product}: {str(e)}")
@@ -76,7 +83,7 @@ def update_graph(selected_product):
                 'xaxis': {'visible': False},
                 'yaxis': {'visible': False}
             }
-        }
+        }, f"Error retrieving full name: {str(e)}"
 
 
 server = app.server
