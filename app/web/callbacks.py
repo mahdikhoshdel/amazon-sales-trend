@@ -1,6 +1,7 @@
 from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
+from logzero import logger
 
 def register_callbacks(app, data_processor, cache_manager):
     @app.callback(
@@ -19,7 +20,7 @@ def register_callbacks(app, data_processor, cache_manager):
             }, "Please select a product."
 
         try:
-            # Retrieve the original (full) product name
+            logger.info(f"Processing request for product: {selected_product}")
             full_name = data_processor.get_original_name(selected_product)
             unabridged = full_name.split("(")[1] if '(' in full_name else full_name
 
@@ -33,6 +34,7 @@ def register_callbacks(app, data_processor, cache_manager):
                     cache_manager.cache_data(selected_product, df)
 
             if df.empty:
+                logger.warning(f"No sales data available for {selected_product}")
                 return {
                     'layout': {
                         'title': 'No sales data available for this product.',
@@ -58,10 +60,10 @@ def register_callbacks(app, data_processor, cache_manager):
                     title_font=dict(family="Poppins, sans-serif", size=20, color="#333"),
                     font=dict(family="Poppins, sans-serif", size=14, color="#666")
                 )
-
+            logger.info(f"Successfully processed data for {selected_product}")
             return fig, unabridged
-
         except Exception as e:
+            logger.error(f"Error processing {selected_product}: {str(e)}")
             return {
                 'layout': {
                     'title': f'Error: {str(e)}',
@@ -70,10 +72,15 @@ def register_callbacks(app, data_processor, cache_manager):
                 }
             }, f"Error retrieving full name: {str(e)}"
 
-    # Update dropdown options dynamically
     @app.callback(
         Output('product-dropdown', 'options'),
         Input('product-dropdown', 'value')
     )
     def update_dropdown_options(value):
-        return [{'label': product, 'value': product} for product in data_processor.get_products()]
+        try:
+            options = [{'label': product, 'value': product} for product in data_processor.get_products()]
+            logger.debug(f"Updated dropdown options with {len(options)} products")
+            return options
+        except Exception as e:
+            logger.error(f"Error updating dropdown options: {str(e)}")
+            return []
