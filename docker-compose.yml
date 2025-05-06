@@ -12,6 +12,8 @@ services:
       - celery
     environment:
       - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
 
   redis:
     image: redis:7.0-alpine
@@ -28,3 +30,5 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP=true
+    env_file:
+      - .env

@@ -1,3 +1,5 @@
-DATA_FILE_PATH = '/app/data/Amazon-Products - online.csv'
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_BACKEND_URL = 'redis://redis:6379/0'
+from decouple import config
+
+DATA_FILE_PATH = config('DATA_FILE_PATH')
+CELERY_BROKER_URL = config('CELERY_BROKER_URL')
+CELERY_BACKEND_URL = config('CELERY_BACKEND_URL')
