@@ -1,6 +1,6 @@
 # Amazon Sales Trend Dashboard
 
-![Dashboard Screenshot](img/dashboard.png)  
+![Dashboard Screenshot](data/img/dashboard.png)  
 *Screenshot of the Amazon Sales Trend Dashboard showing product selection and sales trend visualization.*
 
 A web-based dashboard to visualize daily sales trends of Amazon products, built with Dash-Plotly and enhanced with Celery and Redis for efficient processing and caching.
