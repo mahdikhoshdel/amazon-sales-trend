@@ -41,7 +41,7 @@ Follow these steps to get the project running:
 
 1. **Clone the Repository**  
    ```bash
-   git clone https://github.com/yourusername/amazon-sales-trend-dashboard.git
+   git clone https://github.com/mahdikhoshdel/amazon-sales-trend-dashboard.git
    cd amazon-sales-trend-dashboard
    ```
 
