@@ -5,9 +5,12 @@ from app.services.processor import DataProcessor
 from app.cache.manager import CacheManager
 from logzero import logger
 
-app = Dash(__name__, external_stylesheets=[
-    "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
-])
+app = Dash(
+    __name__,
+    external_stylesheets=[
+        "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    ],
+)
 
 try:
     data_processor = DataProcessor()
@@ -21,9 +24,9 @@ except Exception as e:
 
 server = app.server
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
-        app.run_server(host='0.0.0.0', port=8050, debug=False)
+        app.run_server(host="0.0.0.0", port=8050, debug=False)
         logger.info("Application running on port 8050")
     except Exception as e:
         logger.error(f"Application failed to run: {str(e)}")
